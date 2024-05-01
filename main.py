@@ -2,24 +2,25 @@ from sympy import proper_divisors
 import matplotlib.pyplot as plt
 
 class AliquotSequence:
-    def __init__(self, n, completed=False):
-        self.sequence = [n]
-        self.completed = completed
-
-    def __init__(self, sequence, completed=False):
-        self.sequence = sequence
-        self.completed = completed
-
-    def __init__(self, path_to_elf_file):
-        self.sequence = []
-        self.completed = False
-        self.load_from_elf_file(path_to_elf_file)
-
-    def __init__(self, root_from_elf):
-        path_to_elf_file = f"data/{root_from_elf}.elf"
-        self.sequence = []
-        self.completed = False
-        self.load_from_elf_file(path_to_elf_file)
+    def __init__(self, **kwargs):
+        if 'n' in kwargs:
+            self.sequence = [kwargs['n']]
+        elif 'sequence' in kwargs:
+            self.sequence = kwargs['sequence']
+        elif 'path_to_elf_file' in kwargs:
+            self.sequence = []
+            self.load_from_elf_file(kwargs['path_to_elf_file'])
+        elif 'root_from_elf' in kwargs:
+            path_to_elf_file = f"data/{kwargs['root_from_elf']}.elf"
+            self.sequence = []
+            self.load_from_elf_file(path_to_elf_file)
+        else:
+            raise ValueError("Invalid arguments")
+        
+        if 'completed' in kwargs:
+            self.completed = kwargs['completed']
+        else:
+            self.completed = False
 
     def load_from_elf_file(self, path_to_elf_file):
         # load sequence from elf file, each line is: 0 .   276 = 2^2 * 3 * 23
@@ -40,10 +41,18 @@ class AliquotSequence:
         # check completion
         if next_n == 1: # reached 1
             self.completed = True
+            print(f"Sequence completed after {len(self.sequence)} steps by reaching 1")
         if next_n in self.sequence: # reached a cycle
             self.completed = True
+            print(f"Sequence completed after {len(self.sequence)} steps by reaching a cycle")
 
         self.sequence.append(next_n) # add to sequence
+
+    def compute_all(self, n=10_000): # stop after 10k iterations
+        i = 0
+        while not self.completed and i < n:
+            self.compute_next()
+            i += 1
 
     def magnitude(self):
         return len(self.sequence)
@@ -58,7 +67,7 @@ class AliquotSequence:
         plt.yscale('log')
         plt.grid()
 
-        comp_str = "(complete)" if self.completed else "(not complete)"
+        comp_str = "(complete)" if self.completed else "(incomplete)"
         plt.title(f"Aliquot sequence starting at {self.root()} with length {len(self.sequence)} {comp_str}")
 
         plt.xlabel("Step")
@@ -73,3 +82,8 @@ intersection = lehmer_sets[0].intersection(*lehmer_sets[1:])
 print(f"Length of intersection of all sequences: {len(intersection)}") # 0 -> no common elements
 
 lehmer_five[0].plot()
+
+sequence_980460 = AliquotSequence(n=980460)
+sequence_980460.compute_all()
+
+sequence_980460.plot()
